@@ -113,7 +113,8 @@ class AutoscalingGroup(AutoscalingBase):
             return res
 
 
-@decorators.aws_resource(resource_type=RESOURCE_TYPE)
+@decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)
+@decorators.aws_params(RESOURCE_NAME)
 def prepare(ctx, resource_config, **_):
     """Prepares an AWS Autoscaling Group"""
     # Save the parameters
@@ -176,6 +177,32 @@ def create(ctx, iface, resource_config, params, **_):
         ctx.instance, iface.properties.get(RESOURCE_NAME))
     utils.update_resource_arn(
         ctx.instance, iface.properties.get(GROUP_ARN))
+
+
+@decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)
+@decorators.aws_params(RESOURCE_NAME)
+def update_size(iface,
+                resource_config,
+                min_size=None,
+                max_size=None,
+                desired_capacity=None,
+                **_
+                ):
+    """Updates the size an AWS Autoscaling Group"""
+
+    update_parameters = {
+        RESOURCE_NAME: iface.resource_id,
+        'MinSize': min_size,
+        'MaxSize': max_size,
+        'DesiredCapacity': desired_capacity
+    }
+
+    # drop None values
+    _update_parameters = {k: v
+                          for k, v
+                          in update_parameters.items()
+                          if v is not None}
+    iface.update(_update_parameters)
 
 
 @decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)

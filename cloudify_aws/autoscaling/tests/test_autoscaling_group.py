@@ -205,6 +205,31 @@ class TestAutoscalingGroup(TestBase):
             }
         )
 
+    def test_update_size(self):
+        _ctx = self._prepare_context(RUNTIME_PROPERTIES_AFTER_CREATE)
+
+        self.fake_client.update_auto_scaling_group = self.mock_return(
+            DELETE_RESPONSE)
+        self.fake_client.describe_auto_scaling_groups = MagicMock(
+            return_value={'AutoScalingGroups': [{'Status': 'Created',
+                                                 'MinSize': 0,
+                                                 'MaxSize': 0,
+                                                 'DesiredCapacity': 0,
+                                                 'Instances': []}]}
+        )
+
+        self.fake_client.detach_instances = self.mock_return(DELETE_RESPONSE)
+
+        # we don't have things for remove
+        autoscaling_group.update_size(ctx=_ctx, resource_config=None,
+                                      iface=None, max_size=3,
+                                      desired_capacity=1)
+
+        self.fake_boto.assert_called_with('autoscaling', **CLIENT_CONFIG)
+        self.fake_client.update_auto_scaling_group.assert_called_with(
+            AutoScalingGroupName='test-autoscaling1', DesiredCapacity=1,
+            MaxSize=3)
+
     def test_stop(self):
         _ctx = self._prepare_context(RUNTIME_PROPERTIES_AFTER_CREATE)
 
